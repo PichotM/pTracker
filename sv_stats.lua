@@ -118,8 +118,10 @@ RegisterCommand("leaderboard", function(intSource, tblArgs, stringCommand)
 	table.sort(tbl, function(a, b) return a.playtime > b.playtime end)
 
 	local str = ""
-	for k,v in pairs(tbl) do
-		str = str .. k .. ". " .. v.name .. " | " .. timeToStr(v.playtime) .. "\n"
+	for i=1,10 do
+		local v = tbl[i]
+		if not v then break end
+		str = str .. i .. ". " .. v.name .. " | " .. timeToStr(v.playtime) .. "\n"
 	end
 
 	notifyChat(intSource, "[pTracker]", "Leaderboard\n" .. str)
