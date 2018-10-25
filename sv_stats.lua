@@ -24,6 +24,7 @@ local function GetTrackedData()
 	return a and json.decode(a) or {}
 end
 
+RegisterServerEvent("hardcap:playerActivated")
 AddEventHandler("hardcap:playerActivated", function()
 	local intSource, identifier, time, playerName = source, GetPlayerIdentifiers(source)[1], os.time(), GetPlayerName(source)
 
@@ -39,8 +40,17 @@ AddEventHandler("hardcap:playerActivated", function()
 	SaveResourceFile(resourceName, "data/trackedData.json", json.encode(trackedData))
 end)
 
+AddEventHandler("playerDropped", function()
+	local intSource, identifier, time, playerName, trackedData = source, GetPlayerIdentifiers(source)[1], os.time(), GetPlayerName(source), GetTrackedData()
+	if intSource and identifier and trackedData[identifier] and lastPing[intSource] then
+		trackedData[identifier].playtime = trackedData[identifier].playtime + os.time() - lastPing[intSource]
+		lastPing[intSource] = nil
+		SaveResourceFile(resourceName, "data/trackedData.json", json.encode(trackedData))
+	end
+end)
+
 local function updatePlayersData()
-	SetTimeout(120000, function()
+	SetTimeout(112000, function()
 		local trackedData = GetTrackedData()
 
 		for k,v in pairs(lastPing) do
@@ -60,6 +70,7 @@ local function updatePlayersData()
 	end)
 end
 updatePlayersData()
+
 
 local function GetIdentifierFromUnk(unkVar, trackedData)
 	local idUnk, identifier = ""
@@ -85,18 +96,33 @@ end
 
 RegisterCommand("time", function(intSource, tblArgs, stringCommand)
 	local trackedData = GetTrackedData()
-	local identifier = #tblArgs > 0 and GetIdentifierFromUnk(tblArgs, trackedData) or GetPlayerIdentifiers(intSource)[1]
-	if not identifier or not trackedData[identifier] then notifyChat(intSource, "[pTracker]", "The identifier returned nothing.") return end
+	local identifier = not tblArgs[1] and GetPlayerIdentifiers(intSource)[1] or GetIdentifierFromUnk(tblArgs, trackedData)
+	if not identifier or not trackedData[identifier] then notifyChat(intSource, "[pTracker]", "This identifier returned nothing.") return end
 
-	notifyChat(intSource, "[pTracker]", "Play time: " .. timeToStr(trackedData[identifier].playtime))
+	local data = trackedData[identifier]
+	notifyChat(intSource, "[pTracker]", data.name .. " spent: " .. timeToStr(trackedData[identifier].playtime) .. " on the server.")
 end)
 
 RegisterCommand("seen", function(intSource, tblArgs, stringCommand)
 	local trackedData = GetTrackedData()
-	local identifier = #tblArgs > 0 and GetIdentifierFromUnk(tblArgs, trackedData) or GetPlayerIdentifiers(intSource)[1]
-	if not identifier or not trackedData[identifier] then notifyChat(intSource, "[pTracker]", "The identifier returned nothing.") return end
+	local identifier = not tblArgs[1] and GetPlayerIdentifiers(intSource)[1] or GetIdentifierFromUnk(tblArgs, trackedData)
+	if not identifier or not trackedData[identifier] then notifyChat(intSource, "[pTracker]", "This identifier returned nothing.") return end
 
 	notifyChat(intSource, "[pTracker]", "Last seen in game: " ..  os.date("%d-%m %X", trackedData[identifier].lastconnection))
+end)
+
+RegisterCommand("leaderboard", function(intSource, tblArgs, stringCommand)
+	local trackedData, tbl = GetTrackedData(), {}
+
+	for _,v in pairs(trackedData) do tbl[#tbl + 1] = { playtime = v.playtime, name = v.name } end
+	table.sort(tbl, function(a, b) return a.playtime > b.playtime end)
+
+	local str = ""
+	for k,v in pairs(tbl) do
+		str = str .. k .. ". " .. v.name .. " | " .. timeToStr(v.playtime) .. "\n"
+	end
+
+	notifyChat(intSource, "[pTracker]", "Leaderboard\n" .. str)
 end)
 
 local count = 0
