@@ -12,7 +12,7 @@ local function timeToStr( time )
 	local d = math.floor(tmp % 7)
 	local w = math.floor( tmp / 7 )
 
-	return string.format( "%02is %id %02ih %02im %02is", w, d, h, m, s )
+	return string.format( "%02iw %id %02ih %02im %02is", w, d, h, m, s )
 end
 
 local function notifyChat(intSource, stringPrefix, stringMessage, tblColor)
