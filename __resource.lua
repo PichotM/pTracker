@@ -1,0 +1,1 @@
+server_script 'dist/server.js'
