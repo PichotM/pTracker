@@ -13,10 +13,10 @@ class trackedUserData {
 }
 
 /*
-    0 -> rockstarID
-    1 -> steam
+    1 -> rockstarID
+    2 -> steam
 */
-const mainIdentifier = 1;
+const mainIdentifier = 2;
 
 class pTracker {
     private currentResourceName: string = GetCurrentResourceName();
@@ -29,8 +29,7 @@ class pTracker {
         setInterval(this.updateActivePlayers.bind(this), true ? 5000 : 112000)
     }
 
-    onPlayerDropped() {
-        const playerId = (global as any).source
+    onPlayerDropped(playerId) {
         const playerSource = playerId, identifier = GetPlayerIdentifier(playerId, mainIdentifier), currentTime = Math.floor(new Date().getTime() / 1000)
         if (!playerSource || !identifier) return;
 
@@ -159,11 +158,13 @@ on('onResourceStart', (r) => {
 });
 
 on('hardcap:playerActivated', () => {
+    const playerId = (global as any).source
     if (!WasEventCanceled())
-        a.onPlayerActivated()
+        a.onPlayerActivated(playerId)
 })
 
 on('playerDropped', () => {
+    const playerId = (global as any).source
     if (!WasEventCanceled())
-        a.onPlayerDropped()
+        a.onPlayerDropped(playerId)
 })
